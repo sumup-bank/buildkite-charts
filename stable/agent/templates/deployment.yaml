@@ -42,7 +42,11 @@ spec:
 {{- if .Values.volumeMounts }}{{ toYaml .Values.volumeMounts | nindent 12 }}{{- end }}
 {{- end }}
         - name: {{ .Chart.Name }}
+{{- if (index .Values.image "digest") }}
+          image: "{{ .Values.image.repository }}@{{ (index .Values.image "digest") }}"
+{{- else }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+{{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- if .Values.registryCreds.dockerconfigjson }}
           imagePullSecrets:
