@@ -32,8 +32,21 @@ spec:
     spec:
       serviceAccount: {{ template "fullname" . }}
       containers:
+{{- if .Values.dind.enable }}
+        - name: "{{ .Chart.Name }}-dind"
+          image: "{{ .Values.dind.image.repository }}:{{ .Values.dind.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+{{- if .Values.volumeMounts }}{{ toYaml .Values.volumeMounts | nindent 12 }}{{- end }}
+{{- end }}
         - name: {{ .Chart.Name }}
+{{- if (index .Values.image "digest") }}
+          image: "{{ .Values.image.repository }}@{{ (index .Values.image "digest") }}"
+{{- else }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+{{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- if .Values.registryCreds.dockerconfigjson }}
           imagePullSecrets:
@@ -69,7 +82,7 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:
 {{- if .Values.volumeMounts }}{{ toYaml .Values.volumeMounts | nindent 12 }}{{- end }}
-{{- if .Values.enableHostDocker }}
+{{- if (and .Values.enableHostDocker (not .Values.dind.enable)) }}
             - name: var-run-docker-sock
               mountPath: /var/run/docker.sock
 {{- end }}
@@ -83,7 +96,7 @@ spec:
             {{- end }}
       volumes:
 {{- if .Values.volumes }}{{ toYaml .Values.volumes | nindent 8 }}{{- end }}
-{{- if .Values.enableHostDocker }}
+{{- if (and .Values.enableHostDocker (not .Values.dind.enable)) }}
         - name: var-run-docker-sock
           hostPath:
             path: /var/run/docker.sock

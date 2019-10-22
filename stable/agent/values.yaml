@@ -8,7 +8,16 @@ image:
   repository: buildkite/agent
   # Note that by default we use appVersion to get image tag version
   # tag:
+  # By default we use tag (or appVersion)
+  # digest:
   pullPolicy: IfNotPresent
+
+# By default not use a dind container
+dind:
+  enable: false
+  image: {}
+  # repository: "docker"
+  # tag: "18.06.1-dind"
 
 # Buildkite Agent settings
 agent:
