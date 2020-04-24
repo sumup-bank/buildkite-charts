@@ -39,6 +39,8 @@ spec:
           securityContext:
             privileged: true
           volumeMounts:
+            - name: docker-var-lib
+              mountPath: /var/lib/docker
 {{- if .Values.volumeMounts }}{{ toYaml .Values.volumeMounts | nindent 12 }}{{- end }}
 {{- end }}
         - name: {{ .Chart.Name }}
@@ -63,8 +65,13 @@ spec:
                 secretKeyRef:
                   name: {{ template "fullname" . }}
                   key: agent-token
+            {{- if .Values.agent.tags }}
+            - name: BUILDKITE_AGENT_TAGS
+              value: "{{ .Values.agent.tags }}"
+            {{- else }}
             - name: BUILDKITE_AGENT_META_DATA
               value: "{{ .Values.agent.meta }}"
+            {{- end }}
             {{- if .Values.privateSshKey }}
             - name: SSH_PRIVATE_RSA_KEY
               valueFrom:
@@ -96,6 +103,11 @@ spec:
             {{- end }}
       volumes:
 {{- if .Values.volumes }}{{ toYaml .Values.volumes | nindent 8 }}{{- end }}
+{{- if .Values.dind.enable }}
+        - name: docker-var-lib
+          persistentVolumeClaim:
+            claimName: {{ template "fullname" . }}-chaim
+{{- end }}
 {{- if (and .Values.enableHostDocker (not .Values.dind.enable)) }}
         - name: var-run-docker-sock
           hostPath:
